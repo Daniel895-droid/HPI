@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HPI">
+<meta name="theme-color" content="#0b1220">
+<title>Hypotension Prediction Index</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root{
+  --bg:#0b1220; --card:#121b2e; --card2:#18233a; --line:#26334f;
+  --tx:#e7ecf5; --mut:#93a0b8; --acc:#38bdf8; --acc2:#0ea5e9;
+  --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --vio:#a78bfa;
+  --okbg:rgba(34,197,94,.12); --warnbg:rgba(245,158,11,.13); --badbg:rgba(239,68,68,.14);
+  --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.4}
+body{padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 24px)}
+header{position:sticky;top:0;z-index:5;background:rgba(11,18,32,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px}
+header .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--acc),var(--vio));display:grid;place-items:center;font-weight:800;font-size:13px;color:#06101f;flex:none}
+header h1{font-size:16px;margin:0;line-height:1.15}
+header small{color:var(--mut);font-size:12px;display:block}
+header .sp{flex:1}
+main{max-width:760px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 12px;color:var(--acc);text-transform:uppercase;letter-spacing:.04em}
+.card h3{font-size:14px;margin:14px 0 8px;color:var(--mut);font-weight:600}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:420px){.grid3{grid-template-columns:1fr 1fr}}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:4px}
+label b{color:var(--tx);font-weight:600}
+input[type=text],input[type=number],input[type=date],input[type=search],textarea{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:11px 12px;font-size:17px;font-family:inherit}
+input:focus,textarea:focus{outline:2px solid var(--acc2);border-color:transparent}
+.unit{font-size:11px;color:var(--mut)}
+.full{grid-column:1/-1}
+button{font-family:inherit;font-size:15px;border:0;border-radius:11px;padding:12px 16px;cursor:pointer;font-weight:600}
+.btn{background:var(--acc);color:#04111f}
+.btn2{background:var(--card2);color:var(--tx);border:1px solid var(--line)}
+.btnd{background:transparent;color:var(--bad);border:1px solid rgba(239,68,68,.4)}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.btnrow button{flex:1;min-width:130px}
+.icon{background:var(--card2);color:var(--tx);border:1px solid var(--line);padding:8px 11px;font-size:14px}
+.chk{display:flex;align-items:center;gap:10px;padding:9px 10px;background:var(--card2);border:1px solid var(--line);border-radius:10px;font-size:14px;cursor:pointer;user-select:none}
+.chk input{width:20px;height:20px;accent-color:var(--acc);flex:none}
+.chks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:480px){.chks{grid-template-columns:1fr}}
+.pt{display:flex;align-items:center;gap:12px;cursor:pointer}
+.pt .av{width:40px;height:40px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-weight:700;color:var(--acc);flex:none}
+.pt .meta{flex:1;min-width:0}
+.pt .meta b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt .meta span{color:var(--mut);font-size:13px}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;letter-spacing:.03em}
+.p-ok{background:var(--okbg);color:var(--ok)} .p-warn{background:var(--warnbg);color:var(--warn)} .p-bad{background:var(--badbg);color:var(--bad)}
+.empty{text-align:center;color:var(--mut);padding:28px 10px}
+.res{border-radius:var(--r);padding:16px;margin-bottom:14px;border:1px solid}
+.res.ok{background:var(--okbg);border-color:rgba(34,197,94,.4)}
+.res.warn{background:var(--warnbg);border-color:rgba(245,158,11,.45)}
+.res.bad{background:var(--badbg);border-color:rgba(239,68,68,.5)}
+.res .top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.hpiBig{font-size:40px;font-weight:800;line-height:1;min-width:64px;text-align:center}
+.res.ok .hpiBig{color:var(--ok)} .res.warn .hpiBig{color:var(--warn)} .res.bad .hpiBig{color:var(--bad)}
+.res .tt{font-size:18px;font-weight:700}
+.res .mech{font-size:13px;color:var(--mut)}
+.res ul{margin:6px 0 0;padding-left:20px}
+.res li{margin:5px 0}
+.res .sec{margin-top:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.tag{display:inline-block;background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:8px;padding:2px 8px;margin:2px 4px 2px 0;font-size:12px}
+.note{font-size:12px;color:var(--mut);margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.hist{border-top:1px solid var(--line);padding:12px 0}
+.hist:first-child{border-top:0}
+.hist .h1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hist .vals{font-size:13px;color:var(--mut);margin-top:4px}
+.hist .act{font-size:13px;margin-top:4px}
+canvas{width:100%;height:190px;display:block}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--mut);margin-top:6px}
+.legend i{display:inline-block;width:12px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{background:var(--card2);color:var(--tx);border:1px solid var(--line);padding:9px 12px;font-size:14px}
+.seg button.on{background:var(--acc);color:#04111f;border-color:var(--acc)}
+.banner{font-size:12px;color:var(--mut);background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px}
+.photo{opacity:.6}
+#resultado{scroll-margin-top:100px}
+.pt .del{padding:7px 10px;font-size:15px;color:var(--bad);border-color:rgba(239,68,68,.35);background:transparent;flex:none}
+/* ================= SPLASH ================= */
+#splash{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:calc(env(safe-area-inset-top) + 24px) 24px calc(env(safe-area-inset-bottom) + 24px);
+  background:radial-gradient(120% 80% at 50% 0%,#14325a 0%,var(--bg) 55%),var(--bg);text-align:center;transition:opacity .55s ease,transform .55s ease;overflow:hidden}
+#splash.out{opacity:0;transform:scale(1.04);pointer-events:none}
+#splash .glow{position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(56,189,248,.18),transparent 65%);top:-160px;left:50%;transform:translateX(-50%);pointer-events:none}
+.gauge{position:relative;width:180px;height:180px;animation:pop .7s cubic-bezier(.2,.9,.3,1.3) both}
+.gauge svg{width:100%;height:100%;transform:rotate(135deg)}
+.gauge .trk{fill:none;stroke:var(--card2);stroke-width:12;stroke-linecap:round}
+.gauge .arc{fill:none;stroke:url(#gGrad);stroke-width:12;stroke-linecap:round;stroke-dasharray:0 1000;transition:stroke-dasharray 1.6s cubic-bezier(.3,.7,.2,1)}
+.gauge .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge .num b{font-size:52px;font-weight:800;line-height:1;letter-spacing:-.02em}
+.gauge .num span{font-size:12px;font-weight:700;letter-spacing:.2em;color:var(--mut);margin-top:4px}
+.wave{width:min(340px,86vw);height:62px}
+.wave path{fill:none;stroke:var(--acc);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:1400;stroke-dashoffset:1400;animation:draw 2.4s ease-out .3s forwards;filter:drop-shadow(0 0 6px rgba(56,189,248,.6))}
+.wave line{stroke:var(--line);stroke-dasharray:4 5}
+#splash h1{font-size:clamp(24px,7vw,34px);margin:0;line-height:1.1;font-weight:800;letter-spacing:-.01em;animation:up .7s .5s both}
+#splash h1 em{font-style:normal;background:linear-gradient(90deg,var(--acc),var(--vio));-webkit-background-clip:text;background-clip:text;color:transparent}
+#splash .sub{color:var(--mut);font-size:15px;margin-top:8px;animation:up .7s .65s both}
+#splash .chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;animation:up .7s .8s both}
+#splash .chips span{font-size:11px;font-weight:600;padding:5px 10px;border-radius:99px;border:1px solid var(--line);color:var(--mut);background:rgba(255,255,255,.03)}
+#splash .enter{min-width:220px;padding:16px 28px;font-size:17px;border-radius:14px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#04111f;box-shadow:0 10px 30px rgba(14,165,233,.35);animation:up .7s .95s both}
+#splash .enter:active{transform:scale(.97)}
+#splash .foot{font-size:11px;color:var(--mut);max-width:320px;animation:up .7s 1.1s both}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#splash *{animation:none!important;transition:none!important}.wave path{stroke-dashoffset:0}}
+@media print{#splash{display:none}}
+
+.rt{width:100%;border-collapse:collapse;font-size:14px}
+.rt th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);padding:6px 6px;border-bottom:1px solid var(--line)}
+.rt td{padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.rt tr:last-child td{border-bottom:0}
+.rt td:first-child{font-weight:700;white-space:nowrap}
+.rt td.v{white-space:nowrap;color:var(--acc);font-weight:600}
+.rt .s{display:block;font-size:12px;color:var(--mut);font-weight:400;margin-top:2px}
+.src{font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:4px;vertical-align:middle;background:rgba(255,255,255,.07);color:var(--mut)}
+.scale{display:flex;border-radius:8px;overflow:hidden;margin:8px 0 4px;font-size:12px;font-weight:700;text-align:center}
+.scale div{padding:8px 4px;color:#06101f}
+@media print{.rt td.v{color:#000}}
+@media print{
+  header,.noprint,.btnrow,.icon{display:none!important}
+  body,html{background:#fff;color:#000}
+  .card,.res{background:#fff!important;border:1px solid #999!important;color:#000;break-inside:avoid}
+  .card h2{color:#000}
+  .hist .vals,.mut{color:#333}
+}
+</style>
+</head>
+<body>
+<div id="splash" role="dialog" aria-label="Tela de entrada">
+  <div class="glow"></div>
+  <div class="gauge">
+    <svg viewBox="0 0 200 200"><defs><linearGradient id="gGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ef4444"/><stop offset=".45" stop-color="#f59e0b"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs>
+      <circle class="trk" cx="100" cy="100" r="80" stroke-dasharray="377 1000"/>
+      <circle class="arc" id="spArc" cx="100" cy="100" r="80"/></svg>
+    <div class="num"><b id="spNum">0</b><span>HPI</span></div>
+  </div>
+  <svg class="wave" viewBox="0 0 400 70" preserveAspectRatio="none"><line x1="0" y1="62" x2="400" y2="62"/><path d="M0,62 L8,62 C18,62 20,14 31,14 C39,14 43,34 49,37 C53,39 55,31 59,33 C67,38 82,56 100,62 L108,62 C118,62 120,14 131,14 C139,14 143,34 149,37 C153,39 155,31 159,33 C167,38 182,56 200,62 L208,62 C218,62 220,14 231,14 C239,14 243,34 249,37 C253,39 255,31 259,33 C267,38 282,56 300,62 L308,62 C318,62 320,14 331,14 C339,14 343,34 349,37 C353,39 355,31 359,33 C367,38 382,56 400,62"/></svg>
+  <div><h1>Hypotension<br><em>Prediction Index</em></h1>
+  <div class="sub">Apoio à decisão hemodinâmica intraoperatória</div></div>
+  <div class="chips"><span>HemoSphere</span><span>EV1000</span><span>FloTrac</span><span>Acumen IQ</span></div>
+  <button class="enter" onclick="entrar()">Entrar</button>
+  <div class="foot">Ferramenta de apoio. A conduta final é sempre do anestesiologista, à beira do leito.</div>
+</div>
+<header>
+  <div class="logo">HPI</div>
+  <div><h1>Hypotension Prediction Index</h1><small>Apoio à decisão hemodinâmica intraoperatória</small></div>
+  <div class="sp"></div>
+  <button class="icon noprint" onclick="go('ref')" aria-label="Valores de referência">Valores</button>
+  <button class="icon noprint" onclick="go('config')" aria-label="Configurações">⚙︎</button>
+</header>
+<main id="app"></main>
+
+<script>
+/* ================= ARMAZENAMENTO ================= */
+const KEY='hpiApp.v1';
+const DEF_CFG={
+  hpiAlert:85, pamMin:65, vvsHigh:13, vvsLow:10, icLow:2.2,
+  rvsLow:800, rvsHigh:1200, dpdtLow:400, eadynLow:1.0, cfgVer:2,
+  pamAtencao:75, bolus:250, mini:100, noraConc:16, noraDose:0.05, dobuConc:1000, dobuDose:3
+};
+let S={patients:[],cfg:{...DEF_CFG}};
+
+/* IndexedDB: banco "hpiApp", store "estado", chave "S" (estado inteiro).
+   Migra automaticamente dados antigos do localStorage. */
+const DB_NAME='hpiApp', DB_STORE='estado';
+let dbP=null, usaLS=false;
+function abrirDB(){
+  if(dbP) return dbP;
+  dbP=new Promise((res,rej)=>{
+    if(!('indexedDB' in window)) return rej('sem IndexedDB');
+    const rq=indexedDB.open(DB_NAME,1);
+    rq.onupgradeneeded=()=>rq.result.createObjectStore(DB_STORE);
+    rq.onsuccess=()=>res(rq.result);
+    rq.onerror=()=>rej(rq.error);
+  });
+  return dbP;
+}
+function idbGet(k){return abrirDB().then(db=>new Promise((res,rej)=>{const rq=db.transaction(DB_STORE,'readonly').objectStore(DB_STORE).get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error);}));}
+function idbSet(k,v){return abrirDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction(DB_STORE,'readwrite'); tx.objectStore(DB_STORE).put(v,k); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error);}));}
+function aplicar(o){if(!o) return; S.patients=o.patients||[]; S.cfg={...DEF_CFG,...(o.cfg||{})};
+  if(!(o.cfg&&o.cfg.cfgVer>=2)){ // atualiza limiares antigos (480 / 0,8) se não foram alterados pelo usuário
+    if(S.cfg.dpdtLow===480) S.cfg.dpdtLow=400;
+    if(S.cfg.eadynLow===0.8) S.cfg.eadynLow=1.0;
+    S.cfg.cfgVer=2;
+  }
+}
+async function carregar(){
+  try{
+    const o=await idbGet('S');
+    if(o) aplicar(o);
+    else{ // migração do localStorage
+      let raw=null; try{raw=localStorage.getItem(KEY)}catch(e){}
+      if(raw){aplicar(JSON.parse(raw)); await idbSet('S',JSON.parse(JSON.stringify(S))); try{localStorage.removeItem(KEY)}catch(e){}}
+    }
+  }catch(e){
+    usaLS=true;
+    try{const raw=localStorage.getItem(KEY); if(raw) aplicar(JSON.parse(raw));}catch(e2){}
+  }
+  try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+}
+function save(){
+  const copia=JSON.parse(JSON.stringify(S));
+  if(usaLS){try{localStorage.setItem(KEY,JSON.stringify(copia))}catch(e){alert('Não foi possível salvar no aparelho.')} return;}
+  idbSet('S',copia).catch(()=>alert('Não foi possível salvar no aparelho.'));
+}
+
+/* ================= UTIL ================= */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const num=id=>{const el=$(id); if(!el) return null; const v=el.value.trim().replace(',','.'); if(v==='') return null; const n=parseFloat(v); return isNaN(n)?null:n;};
+const chk=id=>!!($(id)&&$(id).checked);
+const fmtD=d=>{if(!d) return ''; const [y,m,dd]=d.split('-'); return `${dd}/${m}/${y}`;};
+const hhmm=t=>new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+const f1=n=>(Math.round(n*10)/10).toString().replace('.',',');
+const today=()=>{const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10);};
+const getP=id=>S.patients.find(p=>p.id===id);
+const semHPI=p=>p&&p.monitor==='flotrac';
+
+let view='lista', curId=null, lastEval=null, lastInput=null, chosenActs=[];
+function go(v,id){view=v; if(id!==undefined) curId=id; lastEval=null; chosenActs=[]; render(); window.scrollTo(0,0);}
+
+/* ================= MOTOR DE DECISÃO ================= */
+function avaliar(p,x,ctx,prev){
+  const c=S.cfg, peso=p.peso||null;
+  const out={nivel:'ok',titulo:'',mecanismo:'',condutas:[],alertas:[],checar:[],resposta:null};
+
+  // Validade da VVS
+  let vvsState='ausente';
+  if(x.vvs!=null){
+    if(!ctx.vm||!ctx.ritmo||!ctx.semEsforco) vvsState='invalida';
+    else if(!ctx.vc8||!ctx.torax||ctx.pneumo||ctx.trend) vvsState='cautela';
+    else vvsState='valida';
+  }
+  const vvsUsavel = vvsState==='valida'||vvsState==='cautela';
+  const preload = vvsUsavel && x.vvs>=c.vvsHigh;
+  const vvsCinza = vvsUsavel && x.vvs>=c.vvsLow && x.vvs<c.vvsHigh;
+  const vvsBaixa = vvsUsavel && x.vvs<c.vvsLow;
+  const icBaixo = x.ic!=null && x.ic<c.icLow;
+  const icOk = x.ic==null || x.ic>=c.icLow;
+  const rvsBaixa = x.rvs!=null && x.rvs<c.rvsLow;
+  const rvsAlta = x.rvs!=null && x.rvs>c.rvsHigh;
+  const eaBaixo = x.eadyn!=null && x.eadyn<c.eadynLow;
+  const dpBaixo = x.dpdt!=null && x.dpdt<c.dpdtLow;
+  const bradi = x.fc!=null && x.fc<50;
+  const hipo = x.pam!=null && x.pam<c.pamMin;
+
+  // Cálculos de dose
+  const nora = peso? `${f1(c.noraDose*peso*60/c.noraConc)} mL/h (${String(c.noraDose).replace(".",",")} mcg/kg/min, solução ${f1(c.noraConc)} mcg/mL)`:null;
+  const dobu = peso? `${f1(c.dobuDose*peso*60/c.dobuConc)} mL/h (${String(c.dobuDose).replace(".",",")} mcg/kg/min, solução ${f1(c.dobuConc)} mcg/mL)`:null;
+
+  // Resposta à intervenção anterior
+  if(prev && prev.x.vs!=null && x.vs!=null && prev.x.vs>0){
+    const d=(x.vs-prev.x.vs)/prev.x.vs*100;
+    const deuVol=(prev.acoes||[]).includes('Volume');
+    let txt=`VS ${prev.x.vs} → ${x.vs} mL (${d>=0?'+':''}${f1(d)}%)`;
+    if(deuVol) txt+= d>=10? ' — resposta positiva ao volume (≥10%).' : ' — sem resposta significativa ao volume (<10%): evitar novos bolus sem nova indicação.';
+    out.resposta=txt;
+  }
+  if(prev && prev.x.hpi!=null && x.hpi!=null){
+    const dh=x.hpi-prev.x.hpi;
+    out.resposta=(out.resposta?out.resposta+' ':'')+`HPI ${prev.x.hpi} → ${x.hpi} (${dh>=0?'+':''}${dh}).`;
+  }
+
+  // Nível de risco
+  if(hipo || (x.hpi!=null && x.hpi>=c.hpiAlert)) out.nivel='bad';
+  else if(x.hpi!=null && x.hpi>=50) out.nivel='warn';
+  else if(x.hpi==null && x.pam!=null && x.pam<c.pamAtencao) out.nivel='warn'; // modo FloTrac: sem previsão, usa a PAM
+  else out.nivel='ok';
+
+  // Checagens sempre presentes em alerta
+  if(out.nivel!=='ok'){
+    out.checar.push('Conferir a curva arterial: zeragem, nível do transdutor (eixo flebostático), amortecimento, bolhas/coágulos.');
+    out.checar.push('Rever profundidade anestésica, sangramento/perdas, manipulação cirúrgica e eventos recentes (indução, posicionamento, pneumoperitônio).');
+  }
+
+  // Avisos sobre VVS
+  if(vvsState==='invalida') out.alertas.push('VVS não interpretável: exige ventilação controlada, ritmo regular e ausência de esforço respiratório espontâneo.');
+  if(vvsState==='cautela'){
+    const m=[]; if(!ctx.vc8)m.push('VC < 8 mL/kg'); if(!ctx.torax)m.push('tórax aberto'); if(ctx.pneumo)m.push('pneumoperitônio'); if(ctx.trend)m.push('Trendelenburg');
+    out.alertas.push(`VVS com validade reduzida (${m.join(', ')}). VVS alta não é indicação automática de volume.`);
+  }
+  if(ctx.disfVD) out.alertas.push('Disfunção de VD pode elevar a VVS sem responsividade real a volume.');
+  if(ctx.sangra) out.alertas.push('Sangramento ativo: controlar a fonte, dosar Hb/lactato e considerar hemocomponentes/coagulação.');
+  if(p.disfVent) out.alertas.push('Paciente com disfunção ventricular conhecida: preferir bolus menores e reavaliar após cada um.');
+
+  if(out.nivel==='ok'){
+    out.titulo='Risco baixo de hipotensão';
+    out.mecanismo='Sem intervenção indicada';
+    out.condutas.push('Manter conduta atual e vigilância contínua das tendências de HPI, PAM e VS.');
+    if(preload) out.condutas.push(`VVS ${x.vvs}% elevada: observar perdas; não há indicação de volume enquanto a perfusão estiver adequada.`);
+    return out;
+  }
+
+  // Bradicardia
+  if(bradi){
+    out.condutas.push(`FC ${x.fc} bpm: tratar componente cronotrópico — efedrina 5–10 mg IV ou atropina 0,5 mg IV conforme contexto.`);
+  }
+
+  if(preload){
+    out.mecanismo= eaBaixo?'Responsivo a volume, mas com tônus vascular baixo (EaDyn baixo)':'Pré-carga — provável responsividade a volume';
+    out.titulo= eaBaixo?(out.nivel==='bad'?'Alerta: vasopressor primeiro':'Atenção: tônus vascular baixo'):(out.nivel==='bad'?'Alerta: considerar volume':'Atenção: tendência de queda por pré-carga');
+    if(eaBaixo) out.condutas.push(`EaDyn ${x.eadyn} (< ${f1(c.eadynLow)}): volume tende a não subir a PAM — priorizar vasopressor (fenilefrina 50–100 mcg ou noradrenalina 4–8 mcg); volume só como complemento.`);
+    if(vvsState==='cautela'){
+      out.condutas.push(`Mini-prova volêmica: ${c.mini} mL de cristaloide em ~1 min, observando VS/IC.`);
+    } else {
+      const vb = p.disfVent? Math.round(c.bolus/2):c.bolus;
+      out.condutas.push(`Prova volêmica: ${vb} mL de cristaloide/coloide em 5–10 min.`);
+    }
+    out.condutas.push('Reavaliar após o bolus: aumento de VS ≥ 10% confirma responsividade. Registre nova leitura para o app comparar.');
+    if(hipo && out.nivel==='bad') out.condutas.push('Se PAM < 65 durante a reposição, vasopressor em bolus como ponte (fenilefrina 50–100 mcg ou noradrenalina 4–8 mcg).');
+  }
+  else if((rvsBaixa||eaBaixo) && icOk){
+    out.mecanismo='Tônus vascular — vasodilatação com débito preservado';
+    out.titulo= out.nivel==='bad'?'Alerta: considerar vasopressor':'Atenção: tendência de queda por vasodilatação';
+    out.condutas.push('Reduzir agente anestésico se plano profundo (CAM/BIS).');
+    out.condutas.push('Vasopressor em bolus: fenilefrina 50–100 mcg ou noradrenalina 4–8 mcg IV.');
+    out.condutas.push(nora?`Se recorrente: noradrenalina em infusão — iniciar ~${nora}.`:'Se recorrente: noradrenalina em infusão (informe o peso para calcular mL/h).');
+    out.condutas.push('Evitar volume em excesso: VVS não sugere responsividade.');
+  }
+  else if(icBaixo && (dpBaixo||rvsAlta) && !preload){
+    out.mecanismo='Contratilidade — baixo débito sem sinais de hipovolemia';
+    out.titulo= out.nivel==='bad'?'Alerta: suspeita de disfunção cardíaca':'Atenção: baixo débito';
+    out.condutas.push('Investigar: ecocardiografia (ETE/ETT), ECG/ST, arritmia, isquemia, tamponamento, TEP.');
+    out.condutas.push(dobu?`Considerar inotrópico: dobutamina ~${dobu}.`:'Considerar inotrópico: dobutamina 2–5 mcg/kg/min (informe o peso para calcular mL/h).');
+    out.condutas.push('Se PAM muito baixa, noradrenalina para manter pressão de perfusão enquanto investiga.');
+    out.condutas.push('Volume apenas se houver evidência de responsividade (VVS válida alta ou mini-prova positiva).');
+  }
+  else if(icBaixo && (vvsCinza || !vvsUsavel)){
+    out.mecanismo='Indeterminado — baixo débito com VVS em zona cinzenta/indisponível';
+    out.titulo= out.nivel==='bad'?'Alerta: testar responsividade':'Atenção: definir mecanismo';
+    out.condutas.push(`Mini-prova volêmica: ${c.mini} mL em ~1 min. VS ↑ ≥ 5–10% sugere responsividade; então completar bolus.`);
+    out.condutas.push('Sem resposta: investigar função cardíaca (eco) e considerar inotrópico/vasopressor.');
+  }
+  else if(vvsCinza){
+    out.mecanismo='VVS em zona cinzenta — responsividade incerta';
+    out.titulo= out.nivel==='bad'?'Alerta: mecanismo misto':'Atenção: mecanismo misto';
+    out.condutas.push(`Mini-prova volêmica: ${c.mini} mL em ~1 min observando VS.`);
+    out.condutas.push('Se PAM < 65: vasopressor em bolus enquanto testa (fenilefrina 50–100 mcg ou noradrenalina 4–8 mcg).');
+  }
+  else {
+    out.mecanismo='Sem padrão claro nos parâmetros disponíveis';
+    out.titulo= out.nivel==='bad'?'Alerta: tratar a pressão e investigar':'Atenção: monitorar de perto';
+    if(x.ic==null&&x.rvs==null) out.condutas.push('Informe IC e RVS (e, se disponíveis, dP/dt e EaDyn) para definir o mecanismo.');
+    out.condutas.push('Reduzir anestésico se plano profundo.');
+    out.condutas.push('Se PAM < 65: vasopressor em bolus (fenilefrina 50–100 mcg ou noradrenalina 4–8 mcg).');
+  }
+  if(dpBaixo && !out.mecanismo.startsWith('Contratilidade')) out.alertas.push(`dP/dt ${x.dpdt} mmHg/s (< ${c.dpdtLow}): contratilidade possivelmente reduzida — dP/dt depende de carga; confirmar com eco se persistir.`);
+  return out;
+}
+
+/* ================= TELAS ================= */
+function render(){
+  const a=$('app');
+  if(view==='lista') a.innerHTML=telaLista();
+  else if(view==='novo') a.innerHTML=telaPacienteForm();
+  else if(view==='editar') a.innerHTML=telaPacienteForm(getP(curId));
+  else if(view==='paciente') { a.innerHTML=telaPaciente(); desenharGrafico(); }
+  else if(view==='config') a.innerHTML=telaConfig();
+  else if(view==='ref') a.innerHTML=telaRef();
+}
+
+/* ================= VALORES DE REFERÊNCIA ================= */
+function telaRef(){
+  const c=S.cfg;
+  const tab=(titulo,linhas)=>`<div class="card"><h2>${titulo}</h2><table class="rt">
+    <tr><th>Parâmetro</th><th>Referência</th><th>Interpretação</th></tr>
+    ${linhas.map(([p,v,i,src])=>`<tr><td>${p}${src?`<span class="src">${src}</span>`:''}</td><td class="v">${v}</td><td>${i}</td></tr>`).join('')}
+  </table></div>`;
+  return `<div class="banner">Valores de referência para adultos. São faixas de orientação, não metas universais: a meta depende do paciente, da cirurgia e da tendência ao longo do tempo. Etiquetas: <b>FT</b> FloTrac · <b>AIQ</b> Acumen IQ · <b>VV</b> VolumeView · <b>SG</b> Swan-Ganz · <b>FS</b> ForeSight.</div>
+
+  <div class="card"><h2>HPI — escala</h2>
+    <div class="scale">
+      <div style="background:var(--ok);flex:50">0–49</div>
+      <div style="background:var(--warn);flex:${c.hpiAlert-50}">50–${c.hpiAlert-1}</div>
+      <div style="background:var(--bad);flex:${101-c.hpiAlert}">${c.hpiAlert}–100</div>
+    </div>
+    <table class="rt">
+      <tr><td>0–49</td><td>Risco baixo estimado: manter vigilância.</td></tr>
+      <tr><td>50–${c.hpiAlert-1}</td><td>Risco crescente: observar tendência e rever a tela secundária (VVS, dP/dt, EaDyn).</td></tr>
+      <tr><td>≥ ${c.hpiAlert}</td><td>Alerta: investigar o mecanismo e agir antes de a PAM cair abaixo de 65 mmHg.</td></tr>
+    </table>
+    <div class="note">O HPI é um índice de 0 a 100, não uma probabilidade. Um HPI de 90 não significa 90% de chance de hipotensão. O alvo do algoritmo é prever PAM &lt; 65 mmHg por pelo menos 1 minuto. As faixas 50–${c.hpiAlert-1} são didáticas, não oficiais.</div>
+  </div>
+
+  ${tab('Pressão e fluxo',[
+    ['PAM','≥ 65 mmHg','Limiar usual de hipotensão intraoperatória; individualizar em hipertensos.'],
+    ['FC','60–100 bpm','Bradicardia &lt; 50 com hipotensão: tratar o componente cronotrópico.'],
+    ['DC','4–8 L/min','Sangue bombeado por minuto (FC × VS).','FT'],
+    ['IC','2,5–4,0 L/min/m²','DC corrigido pela superfície corporal. &lt; 2,2 sugere baixo fluxo.','FT'],
+    ['VS','60–100 mL','Volume ejetado a cada batimento.','FT'],
+    ['IVS','33–47 mL/m²','VS corrigido pela superfície corporal.','FT'],
+    ['RVS','800–1.200 dyn·s/cm⁵','&lt; 800: vasodilatação. &gt; 1.200: vasoconstrição ou baixo débito compensado. Calculada a partir de PAM, PVC e DC.','FT'],
+    ['IRVS','1.970–2.390 dyn·s·m²/cm⁵','RVS indexada pela superfície corporal.','FT'],
+  ])}
+
+  ${tab('Responsividade a volume',[
+    ['VVS','&lt; 10% · 10–13% · &gt; 13%','Baixa probabilidade de resposta · zona cinzenta · provável resposta. Só vale com VM controlada, ritmo regular e sem esforço espontâneo.','FT'],
+    ['VPP','&lt; 13%','Variação da pressão de pulso; mesma lógica e mesmas limitações da VVS.','AIQ'],
+    ['Resposta a bolus','VS ↑ ≥ 10–15%','Confirma responsividade após prova volêmica. Na mini-prova (100 mL), ↑ ≥ 5–10%.'],
+    ['PVC','2–8 mmHg','Valor isolado prediz mal a resposta a volume; útil como tendência.'],
+  ])}
+
+  ${tab('Parâmetros do Acumen IQ (tela secundária do HPI)',[
+    ['dP/dt','≥ ${c.dpdtLow} mmHg/s','Velocidade de subida da pressão na sístole. Abaixo do limiar sugere contratilidade reduzida, mas depende da carga e da árvore arterial.','AIQ'],
+    ['EaDyn','≥ ${f1(c.eadynLow)}','Relação VPP/VVS. Abaixo de ${f1(c.eadynLow)}, a PAM tende a não subir com volume (tônus vascular baixo → vasopressor).','AIQ'],
+  ])}
+  <div class="banner">Fonte dos cortes padrão de dP/dt (400 mmHg/s) e EaDyn (1,0): algoritmo de tratamento guiado por HPI publicado na <i>Frontiers in Anesthesiology</i> (2024). A Edwards não publica um corte oficial único e os protocolos variam — ajuste em Configurações conforme o serviço.</div>
+
+  ${tab('Pulmão e oxigenação',[
+    ['APEV-I','3–7 mL/kg','Água pulmonar extravascular (peso predito). &gt; 10 mL/kg sugere edema importante.','VV'],
+    ['IPVP','1–3','Índice de permeabilidade vascular pulmonar. Elevado sugere edema por permeabilidade (ex.: SDRA).','VV'],
+    ['SvO₂','60–80%','Saturação venosa mista; queda sugere oferta de O₂ inadequada ao consumo.','SG'],
+    ['ScvO₂','&gt; 70%','Saturação venosa central (cateter venoso central com oximetria).'],
+    ['StO₂','queda &gt; 20% do basal','Oximetria tecidual/cerebral: valorizar a variação em relação ao valor basal do paciente.','FS'],
+    ['Lactato','&lt; 2 mmol/L','Marcador de perfusão; acompanhar a tendência.'],
+  ])}
+
+  <div class="card"><h2>Padrões rápidos</h2><table class="rt">
+    <tr><th>Padrão</th><th>Provável mecanismo</th><th>Direção</th></tr>
+    <tr><td>VVS ↑ · IC ↓</td><td>Pré-carga baixa</td><td>Volume</td></tr>
+    <tr><td>VVS ↓ · IC normal · RVS ↓</td><td>Vasodilatação</td><td>Vasopressor</td></tr>
+    <tr><td>VVS ↓ · IC ↓ · RVS ↑ · dP/dt ↓</td><td>Disfunção cardíaca</td><td>Eco + inotrópico</td></tr>
+    <tr><td>VVS ↑ · EaDyn ↓</td><td>Responde a volume, mas a PAM não sobe</td><td>Volume + vasopressor</td></tr>
+  </table></div>
+
+  <div class="btnrow noprint"><button class="btn2" onclick="go('lista')">← Voltar</button><button class="btn2" onclick="window.print()">Imprimir</button></div>`;
+}
+
+function nivelPill(n){return n==='bad'?'<span class="pill p-bad">ALERTA</span>':n==='warn'?'<span class="pill p-warn">ATENÇÃO</span>':'<span class="pill p-ok">ESTÁVEL</span>';}
+
+function telaLista(){
+  const ps=[...S.patients].sort((a,b)=>(b.data||'').localeCompare(a.data||'')||b.criado-a.criado);
+  let h=`<div class="banner">Ferramenta de apoio. A conduta final é sempre do anestesiologista, à beira do leito.</div>
+  <div class="btnrow" style="margin:0 0 14px"><button class="btn" onclick="go('novo')">＋ Novo paciente</button></div>`;
+  if(!ps.length) return h+`<div class="card empty">Nenhum paciente cadastrado ainda.</div>`;
+  h+=`<div class="card"><h2>Pacientes</h2>`;
+  ps.forEach((p,i)=>{
+    const last=p.readings[p.readings.length-1];
+    h+=`<div class="hist"><div class="pt" onclick="go('paciente','${p.id}')">
+      <div class="av">${esc((p.nome||'?').trim().charAt(0).toUpperCase())}</div>
+      <div class="meta"><b>${esc(p.nome)}</b><span>${esc(p.cirurgia||'—')}${p.hospital?' · '+esc(p.hospital):''} · ${fmtD(p.data)} · ${p.readings.length} leitura(s)</span></div>
+      ${last?nivelPill(last.nivel):''}
+      <button class="icon del" onclick="event.stopPropagation();apagarPacienteId('${p.id}')" aria-label="Excluir paciente">🗑</button></div></div>`;
+  });
+  return h+`</div>`;
+}
+
+function telaPacienteForm(p){
+  const e=!!p; p=p||{};
+  return `<div class="card"><h2>${e?'Editar paciente':'Novo paciente'}</h2>
+  <div class="grid">
+    <div class="full"><label><b>Nome</b></label><input type="text" id="pNome" value="${esc(p.nome)}" autocomplete="off"></div>
+    <div><label><b>Peso</b> <span class="unit">kg</span></label><input type="number" inputmode="decimal" id="pPeso" value="${p.peso??''}"></div>
+    <div><label><b>Data</b></label><input type="date" id="pData" value="${p.data||today()}"></div>
+    <div class="full"><label><b>Hospital</b></label><input type="text" id="pHosp" list="hospList" value="${esc(p.hospital)}" autocomplete="off">
+      <datalist id="hospList">${[...new Set(S.patients.map(z=>z.hospital).filter(Boolean))].map(hh=>`<option value="${esc(hh)}">`).join('')}</datalist></div>
+    <div class="full"><label><b>Cirurgia</b></label><input type="text" id="pCir" value="${esc(p.cirurgia)}"></div>
+    <div class="full"><label><b>Monitorização</b></label>
+      <div class="seg" id="pMon">
+        <button type="button" data-m="hpi" class="${(p.monitor||'hpi')==='hpi'?'on':''}" onclick="selMon(this)">HemoSphere com HPI (Acumen IQ)</button>
+        <button type="button" data-m="flotrac" class="${p.monitor==='flotrac'?'on':''}" onclick="selMon(this)">Só FloTrac (sem HPI)</button>
+      </div></div>
+    <div class="full"><label class="chk"><input type="checkbox" id="pDisf" ${p.disfVent?'checked':''}> Disfunção ventricular conhecida / cardiopata</label></div>
+  </div>
+  <div class="btnrow"><button class="btn2" onclick="${e?`go('paciente','${p.id}')`:`go('lista')`}">Cancelar</button>
+  <button class="btn" onclick="salvarPaciente(${e?`'${p.id}'`:'null'})">Salvar</button></div></div>`;
+}
+
+function selMon(b){document.querySelectorAll('#pMon button').forEach(z=>z.classList.toggle('on',z===b));}
+function salvarPaciente(id){
+  const nome=$('pNome').value.trim(); if(!nome){alert('Informe o nome.');return;}
+  const d={nome,peso:num('pPeso'),data:$('pData').value,cirurgia:$('pCir').value.trim(),hospital:$('pHosp').value.trim(),disfVent:chk('pDisf'),monitor:(document.querySelector('#pMon .on')||{}).dataset?.m||'hpi'};
+  if(id){Object.assign(getP(id),d); save(); go('paciente',id);}
+  else{const p={id:uid(),criado:Date.now(),readings:[],...d}; S.patients.push(p); save(); go('paciente',p.id);}
+}
+
+const CAMPOS=[
+  ['hpi','HPI','0–100',true,1],['pam','PAM','mmHg',true],['fc','FC','bpm'],
+  ['vvs','VVS','%'],['ic','IC','L/min/m²'],['vs','VS','mL'],
+  ['rvs','RVS','dyn·s/cm⁵'],['dpdt','dP/dt','mmHg/s',false,1],['eadyn','EaDyn','',false,1]
+];
+const CTX=[
+  ['vm','Ventilação mecânica controlada',true],['ritmo','Ritmo regular (sinusal)',true],
+  ['semEsforco','Sem esforço respiratório espontâneo',true],['vc8','VC ≥ 8 mL/kg (peso predito)',true],
+  ['torax','Tórax fechado',true],['pneumo','Pneumoperitônio',false],
+  ['trend','Trendelenburg',false],['disfVD','Suspeita de disfunção de VD',false],['sangra','Sangramento ativo',false]
+];
+const ACOES=['Volume','Vasopressor','Inotrópico','Ajuste anestésico','Cronotrópico','Hemocomponente','Observação'];
+
+function telaPaciente(){
+  const p=getP(curId); if(!p) return telaLista();
+  const prev=p.readings[p.readings.length-1];
+  const pctx=prev?prev.ctx:null;
+  let h=`<div class="card"><div class="pt">
+    <div class="av">${esc(p.nome.charAt(0).toUpperCase())}</div>
+    <div class="meta"><b>${esc(p.nome)}</b><span>${esc(p.cirurgia||'—')}${p.hospital?' · '+esc(p.hospital):''} · ${p.peso?f1(p.peso)+' kg':'peso não informado'} · ${fmtD(p.data)}${p.disfVent?' · cardiopata':''} · ${semHPI(p)?'FloTrac':'HPI'}</span></div>
+    <button class="icon" onclick="go('editar')">Editar</button></div>
+    <div class="btnrow noprint"><button class="btn2" onclick="go('lista')">← Pacientes</button><button class="btn2" onclick="window.print()">Imprimir</button></div></div>`;
+
+  if(p.readings.length>1){
+    h+=`<div class="card"><h2>Tendência</h2><canvas id="graf"></canvas>
+    <div class="legend">${semHPI(p)?'':'<span><i style="background:var(--bad)"></i>HPI</span>'}<span><i style="background:var(--acc)"></i>PAM</span><span><i style="background:var(--mut)"></i>Limiares ${semHPI(p)?S.cfg.pamMin:S.cfg.hpiAlert+' / '+S.cfg.pamMin}</span></div></div>`;
+  }
+
+  h+=`<div class="card noprint"><h2>Nova leitura do monitor</h2>
+  ${semHPI(p)?`<div class="banner">Modo FloTrac: sem HPI. O alerta é dado pela PAM (atenção &lt; ${S.cfg.pamAtencao}, alerta &lt; ${S.cfg.pamMin} mmHg) e o mecanismo por VVS, IC e RVS.</div>`:''}
+  <div class="grid3">${CAMPOS.filter(f=>!(semHPI(p)&&f[4])).map(([k,n,u,req])=>`<div><label><b>${n}</b>${req?' *':''} <span class="unit">${u}</span></label>
+    <input type="number" inputmode="decimal" id="x_${k}" placeholder="${prev&&prev.x[k]!=null?String(prev.x[k]).replace('.',','):''}" value="${lastInput&&lastInput[k]!=null?lastInput[k]:''}"></div>`).join('')}</div>
+  <h3>Condições para interpretar a VVS</h3>
+  <div class="chks">${CTX.map(([k,n,def])=>{const on=lastInput&&lastInput._ctx?lastInput._ctx[k]:(pctx?pctx[k]:def);
+    return `<label class="chk"><input type="checkbox" id="c_${k}" ${on?'checked':''}> ${n}</label>`}).join('')}</div>
+  <div class="btnrow"><button class="btn" onclick="avaliarAgora()">Avaliar conduta</button></div></div>`;
+
+  if(lastEval) h+=telaResultado(lastEval);
+
+  h+=`<div class="card"><h2>Histórico (${p.readings.length})</h2>`;
+  if(!p.readings.length) h+=`<div class="empty">Nenhuma leitura registrada.</div>`;
+  [...p.readings].reverse().forEach(r=>{
+    const x=r.x, v=[];
+    CAMPOS.forEach(([k,n,u])=>{if(x[k]!=null) v.push(`${n} ${String(x[k]).replace('.',',')}`)});
+    h+=`<div class="hist"><div class="h1"><b>${hhmm(r.t)} · ${esc(r.titulo)}</b>${nivelPill(r.nivel)}</div>
+      <div class="vals">${v.join(' · ')}</div>
+      <div class="vals">${esc(r.mecanismo)}</div>
+      ${r.acoes&&r.acoes.length?`<div class="act">Conduta realizada: ${r.acoes.map(a=>`<span class="tag">${esc(a)}</span>`).join('')}${r.obs?' — '+esc(r.obs):''}</div>`:''}
+      <div class="btnrow noprint" style="margin-top:6px"><button class="icon" style="flex:0" onclick="apagarLeitura('${r.id}')">Apagar</button></div></div>`;
+  });
+  h+=`</div><div class="btnrow noprint"><button class="btnd" onclick="apagarPaciente()">Excluir paciente</button></div>`;
+  return h;
+}
+
+function telaResultado(ev){
+  const r=ev.r, x=ev.x;
+  return `<div class="res ${r.nivel}" id="resultado">
+    <div class="top"><div class="hpiBig">${x.hpi!=null?x.hpi:x.pam}<div style="font-size:11px;letter-spacing:.15em;color:var(--mut);margin-top:4px">${x.hpi!=null?'HPI':'PAM'}</div></div>
+      <div><div class="tt">${esc(r.titulo)}</div><div class="mech">${esc(r.mecanismo)}</div></div></div>
+    ${r.resposta?`<div class="sec">Resposta à leitura anterior</div><div>${esc(r.resposta)}</div>`:''}
+    ${r.checar.length?`<div class="sec">Antes de tratar</div><ul>${r.checar.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:''}
+    <div class="sec">Conduta sugerida</div><ul>${r.condutas.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>
+    ${r.alertas.length?`<div class="sec">Atenção</div><ul>${r.alertas.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:''}
+    <div class="sec">Conduta realizada</div>
+    <div class="seg" style="margin-top:6px">${ACOES.map(a=>`<button class="${chosenActs.includes(a)?'on':''}" onclick="toggleAcao('${a}')">${a}</button>`).join('')}</div>
+    <div style="margin-top:10px"><input type="text" id="obs" placeholder="Observação (ex.: 250 mL RL, fenilefrina 100 mcg)" value="${esc(ev.obs||'')}"></div>
+    <div class="btnrow"><button class="btn" onclick="salvarLeitura()">Salvar no histórico</button></div>
+    <div class="note">Sugestão baseada nos limiares configurados (HPI ${S.cfg.hpiAlert}, PAM ${S.cfg.pamMin}, VVS ${S.cfg.vvsHigh}%, IC ${f1(S.cfg.icLow)}, EaDyn ${f1(S.cfg.eadynLow)}). Não substitui avaliação clínica, ecocardiografia e protocolo institucional.</div>
+  </div>`;
+}
+
+function lerEntrada(){
+  const x={}; CAMPOS.forEach(([k])=>x[k]=num('x_'+k));
+  const ctx={}; CTX.forEach(([k])=>ctx[k]=chk('c_'+k));
+  return {x,ctx};
+}
+function avaliarAgora(){
+  const p=getP(curId); const {x,ctx}=lerEntrada();
+  if(x.pam==null){alert('Informe a PAM.');return;}
+  if(!semHPI(p)&&x.hpi==null){alert('Informe o HPI (ou mude o paciente para o modo "Só FloTrac" em Editar).');return;}
+  if(x.hpi!=null&&(x.hpi<0||x.hpi>100)){alert('HPI deve estar entre 0 e 100.');return;}
+  const prev=p.readings[p.readings.length-1];
+  lastInput={...x,_ctx:ctx};
+  lastEval={x,ctx,r:avaliar(p,x,ctx,prev)}; chosenActs=[];
+  render(); setTimeout(()=>{const el=$('resultado'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'});},50);
+}
+function toggleAcao(a){
+  if(lastEval) lastEval.obs=$('obs')?$('obs').value:'';
+  chosenActs=chosenActs.includes(a)?chosenActs.filter(z=>z!==a):[...chosenActs,a];
+  const y=window.scrollY; render(); window.scrollTo(0,y);
+}
+function salvarLeitura(){
+  const p=getP(curId); if(!lastEval) return;
+  p.readings.push({id:uid(),t:Date.now(),x:lastEval.x,ctx:lastEval.ctx,nivel:lastEval.r.nivel,titulo:lastEval.r.titulo,mecanismo:lastEval.r.mecanismo,acoes:[...chosenActs],obs:$('obs').value.trim()});
+  save(); lastEval=null; lastInput=null; chosenActs=[]; render(); window.scrollTo(0,0);
+}
+function apagarLeitura(rid){
+  if(!confirm('Apagar esta leitura?')) return;
+  const p=getP(curId); p.readings=p.readings.filter(r=>r.id!==rid); save(); render();
+}
+function apagarPacienteId(id){
+  const p=getP(id); if(!p) return;
+  if(!confirm(`Excluir ${p.nome} e todo o histórico (${p.readings.length} leitura(s))?\n\nIsso não pode ser desfeito.`)) return;
+  S.patients=S.patients.filter(z=>z.id!==id); save(); render();
+}
+function apagarTodos(){
+  if(!S.patients.length){alert('Não há pacientes cadastrados.');return;}
+  if(!confirm(`Excluir TODOS os ${S.patients.length} pacientes e seus históricos?\n\nIsso não pode ser desfeito. Exporte um backup antes, se quiser guardar.`)) return;
+  if(!confirm('Tem certeza? Última confirmação.')) return;
+  S.patients=[]; save(); go('lista');
+}
+function apagarPaciente(){
+  const p=getP(curId); if(!confirm(`Excluir ${p.nome} e todo o histórico?`)) return;
+  S.patients=S.patients.filter(z=>z.id!==curId); save(); go('lista');
+}
+
+/* ================= GRÁFICO ================= */
+function desenharGrafico(){
+  const cv=$('graf'); if(!cv) return; const p=getP(curId); const rs=p.readings; if(rs.length<2) return;
+  const dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=190;
+  cv.width=W*dpr; cv.height=H*dpr; const g=cv.getContext('2d'); g.scale(dpr,dpr);
+  const css=getComputedStyle(document.documentElement);
+  const col=n=>css.getPropertyValue(n).trim();
+  const L=34,R=10,T=10,B=24, max=140;
+  const X=i=>L+(W-L-R)*(rs.length===1?0.5:i/(rs.length-1));
+  const Y=v=>T+(H-T-B)*(1-v/max);
+  g.font='11px -apple-system,sans-serif'; g.fillStyle=col('--mut'); g.strokeStyle=col('--line'); g.lineWidth=1;
+  [0,35,70,105,140].forEach(v=>{g.beginPath();g.moveTo(L,Y(v));g.lineTo(W-R,Y(v));g.stroke();g.fillText(v,4,Y(v)+4);});
+  g.setLineDash([4,4]); g.strokeStyle=col('--mut');
+  [S.cfg.hpiAlert,S.cfg.pamMin].forEach(v=>{g.beginPath();g.moveTo(L,Y(v));g.lineTo(W-R,Y(v));g.stroke();});
+  g.setLineDash([]);
+  const serie=(k,c)=>{g.strokeStyle=c;g.fillStyle=c;g.lineWidth=2.5;g.beginPath();let s=false;
+    rs.forEach((r,i)=>{const v=r.x[k]; if(v==null) return; const px=X(i),py=Y(Math.min(v,max)); s?g.lineTo(px,py):g.moveTo(px,py); s=true;}); g.stroke();
+    rs.forEach((r,i)=>{const v=r.x[k]; if(v==null) return; g.beginPath(); g.arc(X(i),Y(Math.min(v,max)),3.5,0,7); g.fill();});};
+  serie('pam',col('--acc')); serie('hpi',col('--bad'));
+  g.fillStyle=col('--mut');
+  const step=Math.ceil(rs.length/6);
+  rs.forEach((r,i)=>{if(i%step===0||i===rs.length-1){const t=hhmm(r.t); g.fillText(t,Math.min(X(i)-14,W-R-30),H-6);}});
+}
+window.addEventListener('resize',()=>{if(view==='paciente') desenharGrafico();});
+
+/* ================= CONFIGURAÇÕES ================= */
+const CFG_F=[
+  ['hpiAlert','HPI de alerta',''],['pamMin','PAM mínima','mmHg'],['pamAtencao','PAM de atenção (modo FloTrac)','mmHg'],['vvsHigh','VVS alta (responsivo)','%'],['vvsLow','VVS baixa','%'],
+  ['icLow','IC baixo','L/min/m²'],['rvsLow','RVS baixa','dyn·s/cm⁵'],['rvsHigh','RVS alta','dyn·s/cm⁵'],
+  ['dpdtLow','dP/dt baixo','mmHg/s'],['eadynLow','EaDyn baixo',''],
+  ['bolus','Prova volêmica','mL'],['mini','Mini-prova','mL'],
+  ['noraConc','Noradrenalina — concentração','mcg/mL'],['noraDose','Noradrenalina — dose inicial','mcg/kg/min'],
+  ['dobuConc','Dobutamina — concentração','mcg/mL'],['dobuDose','Dobutamina — dose inicial','mcg/kg/min']
+];
+function telaConfig(){
+  return `<div class="card"><h2>Limiares e diluições</h2>
+  <div class="banner">Ajuste conforme o protocolo do serviço. Ex.: noradrenalina 4 mg em 250 mL = 16 mcg/mL; dobutamina 250 mg em 250 mL = 1000 mcg/mL.</div>
+  <div class="grid">${CFG_F.map(([k,n,u])=>`<div><label><b>${n}</b> <span class="unit">${u}</span></label><input type="number" inputmode="decimal" id="cf_${k}" value="${S.cfg[k]}"></div>`).join('')}</div>
+  <div class="btnrow"><button class="btn2" onclick="go('lista')">Voltar</button><button class="btn2" onclick="resetCfg()">Padrões</button><button class="btn" onclick="salvarCfg()">Salvar</button></div></div>
+  <div class="card"><h2>Backup</h2>
+  <div class="banner">Os dados ficam só neste aparelho (IndexedDB). Exporte para não perder o histórico.</div>
+  <div class="btnrow"><button class="btn2" onclick="exportar()">Exportar (.json)</button><button class="btn2" onclick="$('imp').click()">Importar</button></div>
+  <input type="file" id="imp" accept="application/json" style="display:none" onchange="importar(this)"></div>
+  <div class="card"><h2>Apagar dados</h2>
+  <div class="banner">Remove todos os pacientes e históricos deste aparelho. Os limiares e diluições são mantidos.</div>
+  <div class="btnrow"><button class="btnd" onclick="apagarTodos()">Excluir todos os pacientes</button></div></div>`;
+}
+function salvarCfg(){CFG_F.forEach(([k])=>{const v=num('cf_'+k); if(v!=null) S.cfg[k]=v;}); save(); go('lista');}
+function resetCfg(){if(confirm('Restaurar limiares padrão?')){S.cfg={...DEF_CFG}; save(); render();}}
+function exportar(){
+  const b=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`hpi-backup-${today()}.json`; a.click();
+}
+function importar(inp){
+  const f=inp.files[0]; if(!f) return; const rd=new FileReader();
+  rd.onload=()=>{try{const o=JSON.parse(rd.result); if(!Array.isArray(o.patients)) throw 0;
+    if(!confirm('Substituir os dados atuais pelo backup?')) return;
+    S.patients=o.patients; S.cfg={...DEF_CFG,...(o.cfg||{})}; save(); go('lista');}catch(e){alert('Arquivo inválido.');}};
+  rd.readAsText(f);
+}
+
+
+/* ================= SPLASH ================= */
+(function(){
+  const alvo=85, arcLen=377; // 270° de 2πr (r=80)
+  requestAnimationFrame(()=>setTimeout(()=>{const a=$('spArc'); if(a) a.style.strokeDasharray=`${arcLen*alvo/100} 1000`;},250));
+  const t0=performance.now()+250, dur=1600;
+  function tick(t){const k=Math.min(1,Math.max(0,(t-t0)/dur)); const e=1-Math.pow(1-k,3);
+    const n=$('spNum'); if(!n) return; const v=Math.round(alvo*e); n.textContent=v;
+    n.style.color=v>=alvo?'var(--bad)':v>=50?'var(--warn)':'var(--ok)';
+    if(k<1) requestAnimationFrame(tick);}
+  requestAnimationFrame(tick);
+})();
+function entrar(){const sp=$('splash'); if(!sp) return; sp.classList.add('out'); setTimeout(()=>sp.remove(),600);}
+
+carregar().then(render);
+
+/* ================= OFFLINE (service worker) ================= */
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
